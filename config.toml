@@ -1,4 +1,5 @@
 FromEmailID = ""
 FromName = ""
 Password = ""
-ToEmailIds = [ "" ]
+ToEmailIds = [""]
+FileTypes = [".pdf", ".txt"]

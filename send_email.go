@@ -18,6 +18,7 @@ type config struct {
 	FromName    string
 	Password    string
 	ToEmailIds  []string
+	FileTypes   []string
 }
 
 func main() {
@@ -27,11 +28,6 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Println(conf.FromEmailID)
-	fmt.Println(conf.FromName)
-	fmt.Println(conf.Password)
-	fmt.Println(conf.ToEmailIds)
-
 	todayDate := fmt.Sprintf("%d-%d-%d", time.Now().Day(), time.Now().Month(), time.Now().Year())
 
 	m := email.NewMessage("Lab Report "+todayDate, "Lab Report")
@@ -40,23 +36,35 @@ func main() {
 
 	files, err := ioutil.ReadDir(".")
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
+
+	numberOfAttachedFiles := 0
 
 	for _, file := range files {
 		fileDate := fmt.Sprintf("%d-%d-%d", file.ModTime().Day(), file.ModTime().Month(), file.ModTime().Year())
-		if filepath.Ext(file.Name()) == ".pdf" && fileDate == todayDate {
+
+		validExtension := false
+		for _, fileType := range conf.FileTypes {
+			if fileType == filepath.Ext(file.Name()) {
+				validExtension = true
+				break
+			}
+		}
+
+		if validExtension && fileDate == todayDate {
 			err = m.Attach(file.Name())
+			numberOfAttachedFiles++
 			if err != nil {
 				panic(err)
 			}
 		}
 	}
 
-	if err != nil {
-		log.Println(err)
-	}
+	fmt.Printf("Going to send %d fies\n", numberOfAttachedFiles)
 
 	err = email.Send("smtp.gmail.com:587", smtp.PlainAuth("", conf.FromEmailID, conf.Password, "smtp.gmail.com"), m)
-	log.Println(err)
+	if err != nil {
+		log.Println(err.Error())
+	}
 }
